@@ -4,9 +4,16 @@ import sqlite3  # For SQLite database
 import random  # For picking random people
 import os      # For handling file paths
 
-# Set up database path relative to this file
-BASE_DIR = os.path.dirname(__file__)
-DB_PATH = os.path.join(BASE_DIR, "data.db")
+# OLD:
+# BASE_DIR = os.path.dirname(__file__)
+# DB_PATH = os.path.join(BASE_DIR, "data.db")
+
+# NEW — Store the database on Render's persistent disk:
+DB_DIR = "/var/data"
+os.makedirs(DB_DIR, exist_ok=True)   # ensure directory exists (safe locally too)
+
+DB_PATH = os.path.join(DB_DIR, "data.db")
+
 
 # Initialize Flask app
 app = Flask(__name__)
