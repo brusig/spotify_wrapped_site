@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Finished — Quiz Complete</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    /* Responsive Spotify embed container */
+    .spotify-embed-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .spotify-embed-container iframe {
+      flex: 1 1 300px; /* grow to fill space, minimum width 300px */
+      max-width: 100%; /* never exceed parent width */
+      height: 80px;
+      border: none;
+    }
+
+    @media (max-width: 600px) {
+      .spotify-embed-container iframe {
+        flex: 1 1 100%; /* full width on narrow screens */
+      }
+    }
+  </style>
+  {% if show_name_modal %}
+  <style>
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-card { background: var(--card-bg, #121212); border-radius: 8px; padding: 20px; max-width: 520px; width: 92%; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+    .modal-actions { display:flex; gap:8px; margin-top: 12px; }
+  </style>
+  {% endif %}
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo">
+    <h1 class="site-title">Who’s Spotify Wrapped?</h1>
+  </div>
+</header>
+
+<main class="container">
+  <div class="card">
+    <h2>You've guessed everyone!</h2>
+    <div class="card" style="margin-top:12px;">
+      <h3 style="margin-top:0">Top 5 Leaderboard</h3>
+      {% if leaderboard_entries and leaderboard_entries|length %}
+        <div style="margin-top:8px;overflow:auto;">
+        <table class="leaderboard-table" style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr class="small" style="text-align:left;opacity:.8;border-bottom:1px solid rgba(255,255,255,0.06)">
+                <th style="padding:8px 6px;">#</th>
+                <th style="padding:8px 6px;">Name</th>
+                <th style="padding:8px 6px;">Score</th>
+                <th style="padding:8px 6px;">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for e in leaderboard_entries %}
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
+                <td class="small" style="padding:8px 6px;opacity:.8;{% if loop.index == 1 %}background: rgba(255,215,0,0.15);border-left:3px solid rgba(255,215,0,0.8);{% elif loop.index == 2 %}background: rgba(192,192,192,0.15);border-left:3px solid rgba(192,192,192,0.8);{% elif loop.index == 3 %}background: rgba(205,127,50,0.15);border-left:3px solid rgba(205,127,50,0.8);{% endif %}border-top-left-radius:10px;border-bottom-left-radius:10px;border-top-right-radius:10px;border-bottom-right-radius:10px;">{{ loop.index }}</td>
+                <td style="padding:8px 6px;">{{ e["name"] }}</td>
+                <td style="padding:8px 6px;">{{ e["right"] }} / {{ e["total"] }}</td>
+                <td class="small" style="padding:8px 6px;opacity:.8;white-space:nowrap;border-top-right-radius:8px;border-bottom-right-radius:8px;">{{ e["created_at"][:16] }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:12px">
+          <a class="btn secondary" href="{{ url_for('leaderboard') }}">Open full leaderboard</a>
+        </div>
+      {% else %}
+        <p class="small" style="opacity:.8">No entries yet. Be the first!</p>
+      {% endif %}
+    </div>
+
+    
+
+    <p class="small">Your final score: <strong>{{ score.right }}/{{ score.total }}</strong></p>
+
+    <!-- History with track embeds -->
+    {% if history %}
+      <h3 style="margin-top:12px">Your guesses</h3>
+
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:14px">
+        {% for item in history %}
+          <div style="border-top:1px solid rgba(255,255,255,0.03);padding-top:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+              <div style="min-width:36px;">
+                <strong>#{{ loop.index }}</strong>
+              </div>
+              <div style="flex:1;min-width:200px">
+                <div class="small">Your guess: <strong>{{ item.chosen }}</strong></div>
+                <div class="small">Correct: <strong>{{ item.correct }}</strong></div>
+              </div>
+              <div style="min-width:64px;text-align:right;font-size:1.1rem">
+                {% if item.is_right %}✅{% else %}❌{% endif %}
+              </div>
+            </div>
+
+            <!-- Spotify embeds row -->
+            {% if item.tracks %}
+              <div class="spotify-embed-container" style="margin-top:10px;">
+                {% for tid in item.tracks %}
+                  <iframe src="https://open.spotify.com/embed/track/{{ tid }}" loading="lazy" allow="encrypted-media" allowtransparency="true" frameborder="0" scrolling="no" style="overflow: hidden;"></iframe>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="small" style="margin-top:8px">(no tracks recorded for this round)</p>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="small">No guesses recorded — maybe you refreshed the page during the game.</p>
+    {% endif %}
+
+    {% if chameleon %}
+      <div class="card" style="margin-top:12px;">
+        <h3 style="margin-top:0">🏆 Best Chameleon Award</h3>
+        <p class="small" style="opacity:.85;margin-top:6px;">
+          <strong>{{ chameleon["name"] }}</strong> was the hardest to guess!
+        </p>
+        <p class="small" style="opacity:.7;">
+          Only guessed correctly {{ chameleon["correct_guesses"] }} out of {{ chameleon["total_guesses"] }} times 
+          ({{ chameleon["success_rate"] }}% success rate)
+        </p>
+      </div>
+    {% endif %}
+
+    {% if shared_tracks %}
+      <h3 style="margin-top:24px">Shared Songs</h3>
+      <p class="small">Songs that appeared in multiple people's top tracks:</p>
+
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:14px">
+        {% for track_id, data in shared_tracks %}
+          <div style="border-top:1px solid rgba(255,255,255,0.03);padding-top:10px">
+            <div class="spotify-embed-container">
+              <iframe src="https://open.spotify.com/embed/track/{{ track_id }}" loading="lazy" allow="encrypted-media" allowtransparency="true"></iframe>
+            </div>
+            <div class="small" style="margin-top:8px">
+              Appears in:
+              {% for owner in data.owners %}
+                <strong>{{ owner }}</strong>
+                {% if chameleon and owner == chameleon["name"] %}
+                  <span style="background: rgba(255,215,0,0.2); color: #ffd700; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; margin-left: 4px;">🏆 Chameleon</span>
+                {% endif %}
+                {% if not loop.last %}, {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    
+
+    <form action="{{ url_for('reset') }}" method="post" style="margin-top:24px;">
+      <button class="btn" type="submit">Play Again</button>
+      <a class="btn secondary" href="{{ url_for('input_songs') }}" style="margin-left:8px;">Enter Your Songs</a>
+    </form>
+  </div>
+</main>
+
+{% if show_name_modal %}
+<div class="modal-overlay" id="nameModal">
+  <div class="modal-card">
+    <h2 style="margin-top:0">Add yourself to the leaderboard</h2>
+    <p class="small" style="opacity:0.8;margin-bottom:16px;">Your score: <strong>{{ score.right }}</strong> / {{ score.total }}</p>
+    <form method="post" action="{{ url_for('enter_name') }}">
+      <div style="margin-bottom: 16px;">
+        <label style="display:block;margin-bottom:8px;">Your Name</label>
+        <input name="name" placeholder="Enter your name" style="width:100%;">
+      </div>
+      <div class="modal-actions">
+        <button class="btn" type="submit">Save</button>
+        <button class="btn secondary" type="button" id="skipBtn">Skip</button>
+      </div>
+    </form>
+  </div>
+  <script>
+    // Close modal on overlay click (but not when clicking inside card)
+    (function(){
+      const overlay = document.getElementById('nameModal');
+      if (!overlay) return;
+      const skipBtn = document.getElementById('skipBtn');
+      if (skipBtn) {
+        skipBtn.addEventListener('click', function(){
+          window.fetch('{{ url_for('skip_name') }}', { method: 'POST' }).then(()=> window.location.reload());
+        });
+      }
+      overlay.addEventListener('click', function(e){
+        if (e.target === overlay) {
+          window.fetch('{{ url_for('skip_name') }}', { method: 'POST' }).then(()=> window.location.reload());
+        }
+      });
+    })();
+  </script>
+</div>
+{% endif %}
+
+</body>
+</html>

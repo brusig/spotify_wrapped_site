@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>Enter Your Spotify Top Songs</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo">
+    <h1 class="site-title">Who's Spotify Wrapped?</h1>
+  </div>
+</header>
+
+<main class="container">
+  <div class="card">
+    <h2>Add Your Top Songs</h2>
+    <div class="small" style="margin-bottom: 24px; opacity: 0.7;">
+      Get song links by clicking Share → Copy Song Link in Spotify.
+      <br/> 
+      You can change your songs by entering new ones while using the same name.
+    </div>
+    <form method="post">
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 8px;">Your Name</label>
+        <input name="name" placeholder="Enter your name" style="width: 100%;">
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 8px;">Your #1 Song</label>
+        <input name="t1" placeholder="Paste Spotify song link here..." style="width: 100%;">
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 8px;">Your #2 Song</label>
+        <input name="t2" placeholder="Paste Spotify song link here..." style="width: 100%;">
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 8px;">Your #3 Song</label>
+        <input name="t3" placeholder="Paste Spotify song link here..." style="width: 100%;">
+      </div>
+      <div style="margin-top:12px;">
+        <button class="btn" type="submit">Save My Songs</button>
+        <a class="btn secondary" href="{{ url_for('quiz') }}" style="margin-left:8px;">Play the Quiz</a>
+      </div>
+    </form>
+  </div>
+
+  {% if people %}
+    <div class="card">
+      <h2>Who's Added Their Songs?</h2>
+      <p style="margin-bottom:12px;" class="small">{{ people|length }} people have added their songs:</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        {% for p in people %}
+          <span class="small" style="background:rgba(255,255,255,0.1);padding:4px 8px;border-radius:4px;">{{ p.name }}</span>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</main>
+
+</body>
+</html>

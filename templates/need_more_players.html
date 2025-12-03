@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Add More Players</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo">
+    <h1 class="site-title">Who's Spotify Wrapped?</h1>
+  </div>
+</header>
+
+<main class="container">
+  <div class="card">
+    <h2>Waiting for more friends</h2>
+    <p class="small" style="opacity:.85;margin-top:6px;">
+      You'll need at least <strong>3 people</strong> to play fairly.
+      Currently we have <strong>{{ count }}</strong>.
+    </p>
+    <div style="margin-top:16px;">
+      <a class="btn" href="{{ url_for('input_songs') }}">Add Your Songs</a>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>
+
+

@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>Who does this Spotify Wrapped belong to?</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.7);
+      }
+      .modal-content {
+        background-color: #1a1a1a;
+        color: #fff;
+        margin: 15% auto;
+        padding: 20px;
+        border-radius: 8px;
+        width: 80%;
+        max-width: 500px;
+        border: 1px solid #333;
+        position: relative; /* anchor for confetti canvas */
+        overflow: hidden;   /* clip confetti inside modal */
+      }
+      .modal.show {
+        display: block;
+      }
+      #nextButton {
+        display: inline-block;
+      }
+      #viewResultsButton {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo">
+        <h1 class="site-title">Who's Spotify Wrapped?</h1>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="progress-container">
+        <div class="progress-stats">
+          <span class="small">Score: <strong id="currentScore">{{ progress.score.right }}/{{ progress.score.total }}</strong></span>
+          <span class="small">Progress: <strong id="progressText">{{ progress.percent }}%</strong></span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressBar" style="width: {{ progress.percent }}%"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Guess who these top 3 tracks belong to</h2>
+
+        <div class="spotify-row">
+          {% for tid in track_ids %}
+            <iframe src="https://open.spotify.com/embed/track/{{tid}}" allow="encrypted-media" allowtransparency="true" loading="lazy" frameborder="0" scrolling="no" style="overflow: hidden;"></iframe>
+          {% endfor %}
+        </div>
+
+        <p class="small" style="margin-bottom: 12px;">Who does this belong to?</p>
+        <div class="guess-buttons">
+          {% for c in choices %}
+            <button class="guess-btn" onclick="submitGuess('{{c}}')">{{c}}</button>
+          {% endfor %}
+          <div style="margin-top:16px;">
+            <a class="btn secondary" href="{{ url_for('input_songs') }}">Enter Your Songs</a>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="modal">
+      <div class="modal-content card">
+        <h2>Result</h2>
+        <p class="small">
+          Your guess: <strong id="chosenGuess"></strong><br>
+          Correct: <strong id="correctAnswer"></strong><br>
+          <span id="resultEmoji"></span>
+        </p>
+        <p class="small">Score: <strong id="score"></strong></p>
+        <div style="margin-top:12px;">
+          <button id="nextButton" class="btn" onclick="nextQuestion()">Next</button>
+          <button id="viewResultsButton" class="btn" onclick="viewResults()">View Results</button>
+        </div>
+        <!-- Canvas for modal-anchored confetti -->
+        <canvas id="confettiCanvas" style="position:absolute;inset:0;pointer-events:none;z-index:5;"></canvas>
+      </div>
+    </div>
+
+    <script>
+      let modalConfetti = null;
+      let modalConfettiTimer = null;
+
+      async function submitGuess(choice) {
+        const formData = new FormData();
+        formData.append('choice', choice);
+        
+        try {
+          const response = await fetch("{{ url_for('guess') }}", {
+            method: 'POST',
+            body: formData
+          });
+          const result = await response.json();
+          
+          // Show result in modal
+          document.getElementById('chosenGuess').textContent = result.chosen;
+          document.getElementById('correctAnswer').textContent = result.correct;
+          document.getElementById('resultEmoji').textContent = result.is_right ? '✅ Correct!' : '❌ Not correct';
+          document.getElementById('score').textContent = `${result.score.right}/${result.score.total}`;
+          
+          // Update progress bar and score
+          const scoreElement = document.getElementById('currentScore');
+          const progressBar = document.getElementById('progressBar');
+          const progressText = document.getElementById('progressText');
+          
+          // Update the display
+          scoreElement.textContent = `${result.score.right}/${result.score.total}`;
+          const totalPeople = {{ progress.total_people }};
+          const progressPercent = Math.round((result.score.total / totalPeople) * 100);
+          progressBar.style.width = `${progressPercent}%`;
+          progressText.textContent = `${progressPercent}%`;
+          
+          // If it's the last question, show "View Results" instead of "Next"
+          if (result.finished) {
+            document.getElementById('nextButton').style.display = 'none';
+            document.getElementById('viewResultsButton').style.display = 'inline-block';
+          }
+          
+          // Show modal first so canvas has dimensions
+          document.getElementById('feedbackModal').classList.add('show');
+
+          // Confetti on correct answer (immediate, clipped to modal)
+          if (result.is_right && window.confetti) {
+            const canvas = document.getElementById('confettiCanvas');
+            if (canvas) {
+              // Explicitly size the backing canvas to the modal's full box to avoid early cutoff
+              const box = canvas.parentElement.getBoundingClientRect();
+              canvas.width = Math.max(1, Math.floor(box.width));
+              canvas.height = Math.max(1, Math.floor(box.height));
+              // Create or re-create without auto-resize so our manual size is used immediately
+              modalConfetti = confetti.create(canvas, { resize: false, useWorker: true });
+              const duration = 2000; // long enough for particles to reach bottom
+              const end = Date.now() + duration;
+              if (modalConfettiTimer) { clearInterval(modalConfettiTimer); }
+              const rainTick = () => {
+                modalConfetti({
+                  particleCount: 12,
+                  startVelocity: 26,
+                  spread: 65,
+                  ticks: 160,
+                  gravity: 1.25,
+                  angle: 90,
+                  origin: { x: Math.random() * 0.8 + 0.1, y: 0.02 } // start just inside the top
+                });
+              };
+              // Fire immediately
+              rainTick();
+              modalConfettiTimer = setInterval(() => {
+                rainTick();
+                if (Date.now() > end) {
+                  clearInterval(modalConfettiTimer);
+                  modalConfettiTimer = null;
+                }
+              }, 55);
+            }
+          }
+        } catch (error) {
+          console.error('Error:', error);
+        }
+      }
+
+      function nextQuestion() {
+        // Hide modal
+        document.getElementById('feedbackModal').classList.remove('show');
+        // Load next question
+        window.location.reload();
+      }
+
+      function viewResults() {
+        window.location.href = "{{ url_for('finished') }}";
+      }
+    </script>
+    <!-- Confetti library (tiny, no deps). Loaded last for performance. -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  </body>
+</html>

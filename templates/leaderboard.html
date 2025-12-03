@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Leaderboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo">
+    <h1 class="site-title">Who’s Spotify Wrapped?</h1>
+  </div>
+</header>
+
+<main class="container">
+  <div class="card">
+    <h2>Leaderboard</h2>
+    {% if entries and entries|length %}
+      <div style="margin-top:8px;overflow:auto;">
+        <table class="leaderboard-table" style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr class="small" style="text-align:left;opacity:.8;border-bottom:1px solid rgba(255,255,255,0.06)">
+              <th style="padding:8px 6px;">#</th>
+              <th style="padding:8px 6px;">Name</th>
+              <th style="padding:8px 6px;">Score</th>
+              <th style="padding:8px 6px;">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in entries %}
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
+                <td class="small" style="padding:8px 6px;opacity:.8;{% if loop.index == 1 %}background: rgba(255,215,0,0.15);border-left:3px solid rgba(255,215,0,0.8);{% elif loop.index == 2 %}background: rgba(192,192,192,0.15);border-left:3px solid rgba(192,192,192,0.8);{% elif loop.index == 3 %}background: rgba(205,127,50,0.15);border-left:3px solid rgba(205,127,50,0.8);{% endif %}border-top-left-radius:10px;border-bottom-left-radius:10px;border-top-right-radius:10px;border-bottom-right-radius:10px;">{{ loop.index }}</td>
+                <td style="padding:8px 6px;">{{ e["name"] }}</td>
+                <td style="padding:8px 6px;">{{ e["right"] }} / {{ e["total"] }}</td>
+                <td class="small" style="padding:8px 6px;opacity:.8;white-space:nowrap;border-top-right-radius:8px;border-bottom-right-radius:8px;">{{ e["created_at"][:16] }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="small" style="opacity:.8">No entries yet. Be the first!</p>
+    {% endif %}
+
+    <div style="margin-top:16px;">
+      <a class="btn" href="{{ url_for('quiz') }}">Back to Results</a>
+      <a class="btn secondary" href="{{ url_for('input_songs') }}" style="margin-left:8px;">Enter Your Songs</a>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>
+
+

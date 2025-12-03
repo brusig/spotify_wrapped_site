@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>Guess Result</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo">
+        <h1 class="site-title">Who’s Spotify Wrapped?</h1>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="card">
+        <h2>Result</h2>
+
+        <p class="small">
+          Your guess: <strong>{{ chosen }}</strong><br>
+          Correct: <strong>{{ correct }}</strong><br>
+          {% if is_right %}
+            <span>✅ Correct!</span>
+          {% else %}
+            <span>❌ Not correct</span>
+          {% endif %}
+        </p>
+
+        <p class="small">Score: <strong>{{ score.right }}/{{ score.total }}</strong></p>
+
+        <div style="margin-top:12px;">
+          <a class="btn" href="{{ url_for('quiz') }}">Next</a>
+          <a class="btn secondary" href="{{ url_for('admin') }}" style="margin-left:8px;">Admin</a>
+        </div>
+      </div>
+    </main>
+
+  </body>
+</html>
